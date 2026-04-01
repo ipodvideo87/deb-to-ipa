@@ -27,4 +27,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: App
-          path: ${{ github.workspace }}/App.ipa
+          path: ${{ github.workspace }}/App.ipa payload
