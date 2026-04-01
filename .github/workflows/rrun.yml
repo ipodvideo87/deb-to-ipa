@@ -16,9 +16,21 @@ jobs:
         run: |
           curl -L -o ${{ github.workspace }}/app.deb "${{ github.event.inputs.deb }}"
           dpkg-deb -X ${{ github.workspace }}/app.deb ${{ github.workspace }}/app
+          
+          # List contents to debug
+          echo "Contents of app directory:"
+          find ${{ github.workspace }}/app -type d -name "Applications" || echo "No Applications directory found"
+          ls -la ${{ github.workspace }}/app/
 
           mkdir -p ${{ github.workspace }}/ipa/Payload
-          cp -R ${{ github.workspace }}/app/Applications/* ${{ github.workspace }}/ipa/Payload
+          
+          # Check if Applications directory exists before copying
+          if [ -d "${{ github.workspace }}/app/Applications" ]; then
+            cp -R ${{ github.workspace }}/app/Applications/* ${{ github.workspace }}/ipa/Payload
+          else
+            echo "Error: Applications directory not found in extracted deb"
+            exit 1
+          fi
           
           cd ${{ github.workspace }}/ipa
           zip -r ${{ github.workspace }}/App.ipa .
@@ -27,4 +39,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: App
-          path: ${{ github.workspace }}/App.ipa payload
+          path: ${{ github.workspace }}/App.ipa
