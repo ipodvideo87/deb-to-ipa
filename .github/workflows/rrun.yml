@@ -12,30 +12,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Convert deb to IPA
-        run: |
-          curl -L -o ${{ github.workspace }}/app.deb "${{ github.event.inputs.deb }}"
-          dpkg-deb -X ${{ github.workspace }}/app.deb ${{ github.workspace }}/app
-          
-          # List contents to debug
-          echo "Contents of app directory:"
-          find ${{ github.workspace }}/app -type d -name "Applications" || echo "No Applications directory found"
-          ls -la ${{ github.workspace }}/app/
 
-          mkdir -p ${{ github.workspace }}/ipa/Payload
-          
-          # Check if Applications directory exists before copying
-          if [ -d "${{ github.workspace }}/app/Applications" ]; then
-            cp -R ${{ github.workspace }}/app/Applications/* ${{ github.workspace }}/ipa/Payload
-          else
-            echo "Error: Applications directory not found in extracted deb"
-            exit 1
-          fi
-          
-          cd ${{ github.workspace }}/ipa
-          zip -r ${{ github.workspace }}/App.ipa .
+- name: Convert deb to IPA
+  run: |
+    curl -L -o ${{ github.workspace }}/app.deb "${{ github.event.inputs.deb }}"
+    dpkg-deb -X ${{ github.workspace }}/app.deb ${{ github.workspace }}/app
+    
+    # List contents to debug
+    echo "Contents of app directory:"
+    find ${{ github.workspace }}/app -type d | head -20
+    
+    mkdir -p ${{ github.workspace }}/ipa/Payload
+    
+    # Look for actual application files in common locations
+    if [ -d "${{ github.workspace }}/app/Applications" ]; then
+      cp -R ${{ github.workspace }}/app/Applications/* ${{ github.workspace }}/ipa/Payload
+    elif [ -d "${{ github.workspace }}/app/usr/bin" ]; then
+      cp -R ${{ github.workspace }}/app/usr/bin/* ${{ github.workspace }}/ipa/Payload
+    elif [ -d "${{ github.workspace }}/app/opt" ]; then
+      cp -R ${{ github.workspace }}/app/opt/* ${{ github.workspace }}/ipa/Payload
+    else
+      echo "Error: No recognized application directory found in deb"
+      find ${{ github.workspace }}/app -type d -maxdepth 3
+      exit 1
+    fi
+    
+    cd ${{ github.workspace }}/ipa
+    zip -r ${{ github.workspace }}/App.ipa .
 
-      - name: Upload IPA
+    - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: App
