@@ -13,7 +13,7 @@ jobs:
 
     steps:
 
-- name: Convert deb to IPA
+- name: Clonvert deb to IPA
   run: |
     curl -L -o ${{ github.workspace }}/app.deb "${{ github.event.inputs.deb }}"
     dpkg-deb -X ${{ github.workspace }}/app.deb ${{ github.workspace }}/app
